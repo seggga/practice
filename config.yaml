@@ -1,0 +1,9 @@
+# Crawler configuration
+# 'reqtimeout' - is a timeout (in sec) for one page request
+# 'crawltimeout' - is a total timeout (in sec) for the application
+maxdepth:   3
+maxresults: 10
+maxerrors:  500
+url:        "https://wikipedia.org"
+reqtimeout: 10
+crawltimeout: 20
