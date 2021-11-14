@@ -1,9 +1,15 @@
 # Crawler configuration
+
+# 'maxdepth' - maximum depth in links scanning
+# 'maxresults' - maximum number of links obtained
+# 'maxerrors' - limits a number of errors received
+# 'url' - start page to scan links from
 # 'reqtimeout' - is a timeout (in sec) for one page request
 # 'crawltimeout' - is a total timeout (in sec) for the application
-maxdepth:   3
-maxresults: 10
-maxerrors:  500
-url:        "https://wikipedia.org"
-reqtimeout: 10
-crawltimeout: 20
+
+maxdepth:     3
+maxresults:   100
+maxerrors:    500
+url:          "https://telegram.org"
+reqtimeout:   5
+crawltimeout: 15
