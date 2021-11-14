@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -31,36 +32,42 @@ type Page interface {
 
 // page holds a webpage
 type page struct {
+	url string // to solve a problem with relative links on web-page
 	doc *goquery.Document
 }
 
 // NewPage reads web-page's body
-func NewPage(raw io.Reader) (*page, error) {
+func NewPage(raw io.Reader, url string) (*page, error) {
 	doc, err := goquery.NewDocumentFromReader(raw)
 	if err != nil {
 		return nil, err
 	}
-	return &page{doc: doc}, nil
+	return &page{
+		doc: doc,
+		url: url,
+	}, nil
 }
 
-// GetTitle  fit Page interface
+// GetTitle gets title of the 'page'
 func (p *page) GetTitle() string {
 	return p.doc.Find("title").First().Text()
 }
 
-// GetLinks  fit Page interface
+// GetLinks collects a list of links found on the given 'page'
 func (p *page) GetLinks() []string {
 	var urls []string
 	p.doc.Find("a").Each(func(_ int, s *goquery.Selection) {
 		url, ok := s.Attr("href")
 		prefix := "http"
 		if ok {
-			// a trick to solve a problem with relative links - is to add http: at the begining
-			if !strings.HasPrefix(url, prefix) {
-				if len(url) > 2 && url[:2] == "//" {
+			// a relative link
+			if !strings.HasPrefix(url, prefix) && len(url) > 2 {
+				if url[:2] == "//" {
+					// add 'http' prefix to the link with '//' at the begining
 					url = "http:" + url
-				} else if len(url) > 2 && url[:1] == "/" {
-					url = "http:/" + url
+				} else if url[:1] == "/" {
+					// add page's url to the link with '/' at the begining
+					url = p.url + url
 				} else {
 					return
 				}
@@ -72,7 +79,7 @@ func (p *page) GetLinks() []string {
 }
 
 type Requester interface {
-	GetPage(ctx context.Context, url string) (Page, error)
+	Get(ctx context.Context, url string) (Page, error)
 }
 
 type requester struct {
@@ -83,8 +90,8 @@ func NewRequester(timeout time.Duration) requester {
 	return requester{timeout: timeout}
 }
 
-// GetPage searches and returns a webpage on a given URL
-func (r requester) GetPage(ctx context.Context, url string) (Page, error) {
+// Get searches and returns a webpage on a given URL
+func (r requester) Get(ctx context.Context, url string) (Page, error) {
 	select {
 	case <-ctx.Done():
 		return nil, nil
@@ -101,7 +108,7 @@ func (r requester) GetPage(ctx context.Context, url string) (Page, error) {
 			return nil, err
 		}
 		defer body.Body.Close()
-		page, err := NewPage(body.Body)
+		page, err := NewPage(body.Body, url)
 		if err != nil {
 			return nil, err
 		}
@@ -112,30 +119,37 @@ func (r requester) GetPage(ctx context.Context, url string) (Page, error) {
 
 //Crawler - интерфейс (контракт) краулера
 type Crawler interface {
-	Scan(ctx context.Context, url string, depth int)
+	Scan(ctx context.Context, url string, depth uint64)
 	ChanResult() <-chan CrawlResult
+	IncreaseDepth()
 }
 
 // crawler is a main structure that has all the items to control whole process
 type crawler struct {
-	r       Requester           // a thing that queries pages
-	res     chan CrawlResult    // a channel to pass results from r
-	visited map[string]struct{} // a map to hold visited URLs
-	mu      sync.RWMutex        // a mutex to share "visited"-map between multibple go-routines
+	r        Requester           // a thing that queries pages
+	res      chan CrawlResult    // a channel to pass results from r
+	visited  map[string]struct{} // a map to hold visited URLs
+	mu       sync.RWMutex        // a mutex to share "visited"-map between multibple go-routines
+	maxDepth uint64              // limits scanning depth
 }
 
-func NewCrawler(r Requester) *crawler {
+func NewCrawler(r Requester, maxDepth uint64) *crawler {
 	return &crawler{
-		r:       r,
-		res:     make(chan CrawlResult),
-		visited: make(map[string]struct{}),
-		mu:      sync.RWMutex{},
+		r:        r,
+		res:      make(chan CrawlResult),
+		visited:  make(map[string]struct{}),
+		mu:       sync.RWMutex{},
+		maxDepth: maxDepth,
 	}
 }
 
-// Scan fills crawler's map with visited URLs and calls GetPage-method to scan webpages
-func (c *crawler) Scan(ctx context.Context, url string, depth int) {
-	if depth <= 0 { //Проверяем то, что есть запас по глубине
+// Scan fills crawler's map with visited URLs and calls Get-method to scan webpages
+func (c *crawler) Scan(ctx context.Context, url string, depth uint64) {
+	//Проверяем то, что есть запас по глубине
+	c.mu.RLock()
+	maxDepthAchieved := depth >= c.maxDepth
+	c.mu.RUnlock()
+	if maxDepthAchieved {
 		return
 	}
 	c.mu.RLock()
@@ -148,7 +162,7 @@ func (c *crawler) Scan(ctx context.Context, url string, depth int) {
 	case <-ctx.Done(): //Если контекст завершен - прекращаем выполнение
 		return
 	default:
-		page, err := c.r.GetPage(ctx, url) //Запрашиваем страницу через Requester
+		page, err := c.r.Get(ctx, url) //Запрашиваем страницу через Requester
 		if err != nil {
 			c.res <- CrawlResult{Err: err} //Записываем ошибку в канал
 			return
@@ -161,7 +175,7 @@ func (c *crawler) Scan(ctx context.Context, url string, depth int) {
 			Url:   url,
 		}
 		for _, link := range page.GetLinks() {
-			go c.Scan(ctx, link, depth-1) //На все полученные ссылки запускаем новую рутину сборки
+			go c.Scan(ctx, link, depth+1) //На все полученные ссылки запускаем новую рутину сборки
 		}
 	}
 }
@@ -170,9 +184,15 @@ func (c *crawler) ChanResult() <-chan CrawlResult {
 	return c.res
 }
 
+// IncreaseDpeth adds 2 to the property 'maxDepth' atomically
+func (c *crawler) IncreaseDepth() {
+	newDepth := atomic.AddUint64(&c.maxDepth, 2)
+	log.Printf("MaxDepth increased via SIGUSR1, new value is %d", newDepth)
+}
+
 //Config - структура для конфигурации
 type Config struct {
-	MaxDepth     int    `yaml:"maxdepth"`
+	MaxDepth     uint64 `yaml:"maxdepth"`
 	MaxResults   int    `yaml:"maxresults"`
 	MaxErrors    int    `yaml:"maxerrors"`
 	Url          string `yaml:"url"`
@@ -180,7 +200,7 @@ type Config struct {
 	CrawlTimeout int    `yaml:"crawltimeout"`
 }
 
-// Read implements filling config from yaml-file
+// ReadConfig implements filling config from yaml-file
 func ReadConfig() (*Config, error) {
 	// read config file
 	configData, err := ioutil.ReadFile("config.yaml")
@@ -209,25 +229,38 @@ func main() {
 	var r Requester
 
 	r = NewRequester(time.Duration(cfg.ReqTimeout) * time.Second)
-	cr = NewCrawler(r)
+	cr = NewCrawler(r, cfg.MaxDepth)
+	log.Printf("Crawler started with PID: %d", os.Getpid())
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go cr.Scan(ctx, cfg.Url, cfg.MaxDepth)  //Запускаем краулер в отдельной рутине
+	go cr.Scan(ctx, cfg.Url, 1)             //Запускаем краулер в отдельной рутине
 	go processResult(ctx, cancel, cr, *cfg) //Обрабатываем результаты в отдельной рутине
 
-	sigCh := make(chan os.Signal, 2)                      //Создаем канал для приема сигналов
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGUSR1) //Подписываемся на сигнал SIGINT
+	sigInt := make(chan os.Signal)        //Создаем канал для приема сигналов
+	signal.Notify(sigInt, syscall.SIGINT) //Подписываемся на сигнал SIGINT
+
+	sigUsr := make(chan os.Signal)         //Создаем канал для приема сигналов
+	signal.Notify(sigUsr, syscall.SIGUSR1) //Подписываемся на сигнал SIGUSR1
+
 	for {
 		select {
 		case <-ctx.Done(): //Если всё завершили - выходим
 			return
-		case gotSignal := <-sigCh:
-			if gotSignal == syscall.SIGINT {
-				cancel() //Если пришёл сигнал SigInt - завершаем контекст
-			} else if gotSignal == syscall.SIGUSR1 {
-				// TODO: добавить глубину +2
-			}
 
+		// got INT signal
+		case <-sigInt:
+			log.Println("got INTERRUPT signal")
+			cancel() //Если пришёл сигнал SigInt - завершаем контекст
+
+		// total timeout
+		case <-time.After(time.Second * time.Duration(cfg.CrawlTimeout)):
+			log.Printf("Crawler stops on timeout: %d sec", cfg.CrawlTimeout)
+			cancel()
+
+		// add 2 to max depth
+		case <-sigUsr:
+			log.Println("got USR1 signal")
+			cr.IncreaseDepth() // sigUsr1 - increase maxDepth
 		}
 	}
 }
@@ -238,25 +271,28 @@ func processResult(ctx context.Context, cancel func(), cr Crawler, cfg Config) {
 		select {
 		case <-ctx.Done():
 			return
+
+		// got message in the channel
 		case msg := <-cr.ChanResult():
 			if msg.Err != nil {
+				// message contains error
 				maxErrors--
 				log.Printf("crawler result return err: %s\n", msg.Err.Error())
 				if maxErrors <= 0 {
+					log.Println("Maximum number of errors occured.")
 					cancel()
 					return
 				}
 			} else {
+				// message contains data
 				maxResult--
 				log.Printf("crawler result: [url: %s] Title: %s\n", msg.Url, msg.Title)
 				if maxResult <= 0 {
+					log.Println("Maximum number of results obtained.")
 					cancel()
 					return
 				}
 			}
-		case <-time.After(time.Second * time.Duration(cfg.CrawlTimeout)):
-			cancel()
-			return
 		}
 	}
 }
