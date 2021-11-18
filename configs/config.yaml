@@ -1,2 +1,4 @@
 # ClonesSearch cloremover
 
+# loglevel ["debug, "info", "error"]
+loglevel: "info"
