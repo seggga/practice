@@ -8,7 +8,6 @@ import (
 )
 
 func TestGetClones(t *testing.T) {
-
 	fileSlice := []domain.File{
 		{Dir: ".", Name: "clone1", Path: "./clone1", SizeInBytes: 11, CloneID: 0},
 		{Dir: ".", Name: "clone2", Path: "./clone2", SizeInBytes: 12, CloneID: 0},
