@@ -1,7 +1,6 @@
 package cloremover
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/seggga/practice/internal/domain"
@@ -61,47 +60,47 @@ func sortByPath(sl []domain.File) []domain.File {
 	return sl
 }
 
-// PrintClones prints out  found data to the console
-func (srv *service) PrintClones(viewFiles int, dirLimit int) {
+// // PrintClones prints out  found data to the console
+// func (srv *service) PrintClones(viewFiles int, dirLimit int) {
 
-	clones := srv.storage.ReadFiles()
-	clones = sortByID(clones)
+// 	clones := srv.storage.ReadFiles()
+// 	clones = sortByID(clones)
 
-	// determine the amount of clones of each CloneID
-	cloneMap := make(map[int]int)
-	for _, fileData := range clones {
-		cloneMap[fileData.CloneID] += 1
-	}
-	// first string
-	fmt.Printf("Directory [ %s ] contains clone-files as folows\n", srv.dir)
+// 	// determine the amount of clones of each CloneID
+// 	cloneMap := make(map[int]int)
+// 	for _, fileData := range clones {
+// 		cloneMap[fileData.CloneID] += 1
+// 	}
+// 	// first string
+// 	fmt.Printf("Directory [ %s ] contains clone-files as folows\n", srv.dir)
 
-	var id, showCounter, limitCounter int
-	outputMap := make(map[int]int)
-	for _, fileData := range clones {
-		if id != fileData.CloneID {
-			// ID mismatch - means start of another group of clones with the new id
-			showCounter += 1
-			if showCounter > viewFiles {
-				// that's enough to print clone-files
-				return
-			}
+// 	var id, showCounter, limitCounter int
+// 	outputMap := make(map[int]int)
+// 	for _, fileData := range clones {
+// 		if id != fileData.CloneID {
+// 			// ID mismatch - means start of another group of clones with the new id
+// 			showCounter += 1
+// 			if showCounter > viewFiles {
+// 				// that's enough to print clone-files
+// 				return
+// 			}
 
-			id = fileData.CloneID
-			outputMap[showCounter] = id
+// 			id = fileData.CloneID
+// 			outputMap[showCounter] = id
 
-			fmt.Println()
-			fmt.Printf("[%2d]: %s - %d bytes, %3d clones:\n", showCounter, fileData.Name, fileData.SizeInBytes, cloneMap[id])
-			limitCounter = 1
-		}
+// 			fmt.Println()
+// 			fmt.Printf("[%2d]: %s - %d bytes, %3d clones:\n", showCounter, fileData.Name, fileData.SizeInBytes, cloneMap[id])
+// 			limitCounter = 1
+// 		}
 
-		if dirLimit > 0 && limitCounter > dirLimit {
-			continue // that's enough to print directories for theese clone-files
-		}
-		fmt.Println(fileData.Dir)
-		limitCounter += 1
-	}
+// 		if dirLimit > 0 && limitCounter > dirLimit {
+// 			continue // that's enough to print directories for theese clone-files
+// 		}
+// 		fmt.Println(fileData.Dir)
+// 		limitCounter += 1
+// 	}
 
-}
+// }
 
 // RemoveCLones calls file removal and corresponding storage data change
 func (srv *service) RemoveClones() error {

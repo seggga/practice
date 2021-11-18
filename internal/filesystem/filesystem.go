@@ -3,6 +3,7 @@ package filesystem
 import (
 	"fmt"
 	"io/fs"
+	"os"
 	"sync"
 
 	"github.com/seggga/practice/internal/domain"
@@ -87,11 +88,6 @@ func (f *FileSystem) FindFiles(dirSlice []string) ([]domain.File, error) {
 	return resultSlice, nil
 }
 
-func enumFiles() {
-
+func (fs *FileSystem) RemoveFile(file domain.File) error {
+	return os.Remove(file.Path)
 }
-
-func (fs *FileSystem) ReadFiles()
-func (fs *FileSystem) GetHash()
-func (fs *FileSystem) RemoveFile(domain.File) error
-func (fs *FileSystem) RemoveDirectory()
