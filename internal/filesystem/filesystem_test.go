@@ -31,7 +31,7 @@ test-folder (.)
 */
 var sysVal int
 
-func createTestFiles() {
+func createTestFolder() {
 	os.MkdirAll("test-folder", os.ModePerm)
 	os.Create(filepath.Join("test-folder", "clone1"))
 	os.Create(filepath.Join("test-folder", "clone2"))
@@ -53,9 +53,8 @@ func createTestFiles() {
 	os.Create(filepath.Join("test-folder", "test-folder3", "test-folder4", "clone3"))
 }
 
-func deleteTestFiles() {
+func deleteTestFolder() {
 	os.RemoveAll("test-folder")
-
 }
 
 // cropped fileData-type for testing only
@@ -65,10 +64,11 @@ type fileDataReduced struct {
 }
 
 func TestFindSubfoldersRealFS(t *testing.T) {
+	createTestFolder()
+	defer deleteTestFolder()
 
 	dir := "test-folder"
 	FS := New(os.DirFS(dir))
-	createTestFiles()
 	dirSlice, _ := FS.FindSubfolders(dir)
 
 	expectedSlice := []string{".", "test-folder1", "test-folder2", "test-folder3", "test-folder3/test-folder4"}
@@ -94,8 +94,8 @@ func TestFindFilesRealFS(t *testing.T) {
 		{Dir: "test-folder3/test-folder4", Name: "clone3"},
 	}
 
-	createTestFiles()
-	defer deleteTestFiles()
+	createTestFolder()
+	defer deleteTestFolder()
 
 	dir := "test-folder"
 	FS := New(os.DirFS(dir))
@@ -109,5 +109,4 @@ func TestFindFilesRealFS(t *testing.T) {
 	}
 
 	assert.ElementsMatch(t, outFileSlice, expectedSlice, "File data slice is not valid")
-
 }
