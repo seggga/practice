@@ -6,7 +6,7 @@ import (
 
 	"github.com/seggga/practice/internal/filesystem"
 	"github.com/seggga/practice/internal/repositories/memrepo"
-	"github.com/seggga/practice/internal/services/removersrv"
+	"github.com/seggga/practice/internal/services/cloremover"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 	fs := filesystem.New(os.DirFS(dir))
 	// define storage
 	stor := memrepo.New()
-	service := removersrv.New(fs, stor)
+	service := cloremover.New(fs, stor)
 
 	// obtain files
 	err = service.FindFiles(dir)

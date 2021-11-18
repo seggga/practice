@@ -1,4 +1,4 @@
-package removersrv
+package cloremover
 
 import (
 	"fmt"
