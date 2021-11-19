@@ -1,0 +1,10 @@
+# Cloremover configuration file
+
+# loglevel "debug" / "info" / "error"
+loglevel: "debug"
+
+# number of goroutines executing simultaneously
+cores: 2
+
+# directory to find clone files
+dir: "./test-folder/"
