@@ -53,7 +53,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	slogger.Info("Starting the application...")
+	slogger.Info("Clones has been deleted.")
 }
 
 type Config struct {
