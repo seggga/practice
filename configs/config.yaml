@@ -1,7 +1,7 @@
 # Cloremover configuration file
 
 # loglevel "debug" / "info" / "error"
-loglevel: "info"
+loglevel: "debug"
 
 # number of goroutines executing simultaneously
 cores: 2
