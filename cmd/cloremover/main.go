@@ -19,11 +19,13 @@ func main() {
 		fmt.Println("error reading config, program exit")
 		return
 	}
+
 	// init logger
 	loggerConfig, err := newLoggerConfig(*config)
 	if err != nil {
 		fmt.Printf("error reading config, %v", err)
 	}
+
 	logger, _ := loggerConfig.Build()
 	defer func() { _ = logger.Sync() }()
 
@@ -45,18 +47,13 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	// find clones
-	err = service.GetClones()
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 	// remove clones
 	err = service.RemoveClones()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	slogger.Info("Starting the application...")
 }
 
 type Config struct {
