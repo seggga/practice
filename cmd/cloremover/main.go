@@ -46,7 +46,7 @@ func main() {
 		return
 	}
 	// find clones
-	err = service.GetClones() // TODO проверить, действительно ли нужно возвращать здесь ошибку
+	err = service.GetClones()
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -65,7 +65,7 @@ type Config struct {
 	Dir      string `yaml:"dir"`
 }
 
-// ReadConfig implements filling config from yaml-file
+// ReadConfig implements filling config from ./configs/config.yaml
 func ReadConfig() (*Config, error) {
 	// read config file
 	configData, err := ioutil.ReadFile("./configs/config.yaml")
@@ -94,7 +94,7 @@ func newLoggerConfig(config Config) (*zap.Config, error) {
 		return nil, fmt.Errorf("incorrect loglevel value")
 	}
 	return &zap.Config{
-		Encoding:    "json",
+		Encoding:    "console",
 		Level:       level,
 		OutputPaths: []string{"stdout"},
 		EncoderConfig: zapcore.EncoderConfig{
@@ -103,6 +103,7 @@ func newLoggerConfig(config Config) (*zap.Config, error) {
 			EncodeLevel: zapcore.CapitalLevelEncoder,
 			TimeKey:     "time",
 			EncodeTime:  zapcore.ISO8601TimeEncoder,
+			FunctionKey: "func",
 		},
 	}, nil
 }
