@@ -104,6 +104,7 @@ func (f *FileSystem) FindFiles(dirSlice []string) ([]domain.File, error) {
 // RemoveFile removes a file specified
 func (f *FileSystem) RemoveFile(file domain.File) error {
 	f.slogger.Debugf("trying to remove [ %s ] file", file.Path)
+	// log.Panic("panic!!!")
 	err := os.Remove(file.Path)
 	if err != nil {
 		f.slogger.Errorf("failed remove file", err)
