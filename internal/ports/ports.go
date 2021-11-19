@@ -12,8 +12,8 @@ type FileSystem interface {
 
 type RemoverService interface {
 	FindFiles(path string) error
-	GetClones(files []domain.File) error
-	RemoveClones(uniqFilePath string)
+	GetClones() error
+	RemoveClones() error
 }
 
 type Storager interface {
@@ -21,5 +21,4 @@ type Storager interface {
 	GetClones() error
 	GetDeletable()
 	ReadFiles() []domain.File
-	RemoveFile(domain.File)
 }
