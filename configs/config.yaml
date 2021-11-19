@@ -7,4 +7,4 @@ loglevel: "info"
 cores: 2
 
 # directory to find clone files
-dir: "./test-folder"
+dir: "./test-folder/"
