@@ -110,7 +110,6 @@ func (mr *MemRepo) GetDeletable() {
 				deletableFiles = append(deletableFiles, cloneGroup[1:]...)
 				// clear cloneGroup
 				cloneGroup = cloneGroup[:0]
-				continue
 			}
 			// create a new slice of clones
 			cloneID = fileData.CloneID
