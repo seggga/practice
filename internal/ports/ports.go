@@ -19,6 +19,7 @@ type RemoverService interface {
 type Storager interface {
 	StoreFiles([]domain.File)
 	GetClones() error
+	GetDeletable()
 	ReadFiles() []domain.File
 	RemoveFile(domain.File)
 }
