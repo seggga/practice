@@ -12,15 +12,15 @@ type service struct {
 	fs      ports.FileSystem
 	storage ports.Storager
 	dir     string
-	logger  *zap.SugaredLogger
+	slogger *zap.SugaredLogger
 	// mutex sync.Mutex
 }
 
-func New(fs ports.FileSystem, stor ports.Storager, logger *zap.SugaredLogger) *service {
+func New(fs ports.FileSystem, stor ports.Storager, slogger *zap.SugaredLogger) *service {
 	return &service{
 		fs:      fs,
 		storage: stor,
-		logger:  logger,
+		slogger: slogger,
 		// mutex: sync.Mutex{},
 	}
 }
@@ -29,15 +29,17 @@ func (srv *service) FindFiles(path string) error {
 	// obtain all the subfolders in the given path
 	dirSlice, err := srv.fs.FindSubfolders(path)
 	if err != nil {
-		srv.logger.Errorf("error finding subfolders, %v", err)
+		srv.slogger.Errorf("error finding subfolders, %v", err)
 		return err
 	}
+	srv.slogger.Debugf("obtained fileSlice on %s directory, %d files", path, len(dirSlice))
 	// obtain all the files in all subfolders
 	fileSlice, err := srv.fs.FindFiles(dirSlice)
 	if err != nil {
-		srv.logger.Errorf("error finding files, %v", err)
+		srv.slogger.Errorf("error finding files, %v", err)
 		return err
 	}
+	srv.slogger.Debugf("obtained fileSlice on %s directory, %d files", path, len(fileSlice))
 	// store files data in the storage
 	srv.storage.StoreFiles(fileSlice)
 	return nil

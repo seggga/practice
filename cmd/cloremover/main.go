@@ -31,12 +31,12 @@ func main() {
 	slogger.Info("Starting the application...")
 	// define filesystem
 	if config.Dir == "" {
-		slogger.Error("directory (Dir) not set in config.yaml, program exit")
+		slogger.Error("directory value [ Dir ] is not set in config.yaml, program exit")
 		return
 	}
-	fs := filesystem.New(config.Dir)
+	fs := filesystem.New(config.Dir, slogger)
 	// define storage
-	stor := memrepo.New()
+	stor := memrepo.New(slogger)
 	service := cloremover.New(fs, stor, slogger)
 
 	// obtain files

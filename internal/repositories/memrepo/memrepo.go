@@ -4,15 +4,18 @@ import (
 	"fmt"
 
 	"github.com/seggga/practice/internal/domain"
+	"go.uber.org/zap"
 )
 
 type MemRepo struct {
 	fileSlice []domain.File
+	slogger   *zap.SugaredLogger
 }
 
-func New() *MemRepo {
+func New(slogger *zap.SugaredLogger) *MemRepo {
 	return &MemRepo{
 		fileSlice: make([]domain.File, 0),
+		slogger:   slogger,
 	}
 }
 

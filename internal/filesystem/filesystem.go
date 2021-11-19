@@ -7,16 +7,19 @@ import (
 	"sync"
 
 	"github.com/seggga/practice/internal/domain"
+	"go.uber.org/zap"
 )
 
 type FileSystem struct {
 	fileSystem fs.FS
+	slogger    *zap.SugaredLogger
 }
 
-func New(dir string) *FileSystem {
+func New(dir string, slogger *zap.SugaredLogger) *FileSystem {
 	fsys := os.DirFS(dir)
 	return &FileSystem{
 		fileSystem: fsys,
+		slogger:    slogger,
 	}
 }
 
@@ -31,6 +34,7 @@ func (f *FileSystem) FindSubfolders(path string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	f.slogger.Debugf("obtained dirslice on %s directory, %d files", path, len(dirSlice))
 	return dirSlice, nil
 }
 

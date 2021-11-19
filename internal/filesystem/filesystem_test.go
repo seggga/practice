@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 /*
@@ -68,7 +69,7 @@ func TestFindSubfoldersRealFS(t *testing.T) {
 	defer deleteTestFolder()
 
 	dir := "test-folder"
-	FS := New(dir)
+	FS := New(dir, zap.NewExample().Sugar())
 	dirSlice, _ := FS.FindSubfolders(dir)
 
 	expectedSlice := []string{".", "test-folder1", "test-folder2", "test-folder3", "test-folder3/test-folder4"}
@@ -98,7 +99,8 @@ func TestFindFilesRealFS(t *testing.T) {
 	defer deleteTestFolder()
 
 	dir := "test-folder"
-	FS := New(dir)
+	FS := New(dir, zap.NewExample().Sugar())
+
 	dirSlice, _ := FS.FindSubfolders(dir)
 	fileSlice, _ := FS.FindFiles(dirSlice)
 

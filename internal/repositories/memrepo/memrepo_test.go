@@ -5,6 +5,7 @@ import (
 
 	"github.com/seggga/practice/internal/domain"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 )
 
 func TestGetClones(t *testing.T) {
@@ -45,7 +46,7 @@ func TestGetClones(t *testing.T) {
 		{Dir: "test-folder3/test-folder4", Name: "clone3", Path: "test-folder3/test-folder4/clone3", SizeInBytes: 13},
 	}
 
-	memRepo := New()
+	memRepo := New(zap.NewExample().Sugar())
 	memRepo.StoreFiles(fileSlice)
 	memRepo.GetClones()
 
