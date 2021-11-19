@@ -21,10 +21,11 @@ func New(slogger *zap.SugaredLogger) *MemRepo {
 
 func (mr *MemRepo) StoreFiles(files []domain.File) {
 	mr.fileSlice = files
+	mr.slogger.Debugf("stored %d file-elements", len(files))
 }
 
 func (mr *MemRepo) GetClones() error {
-
+	mr.slogger.Debug("started")
 	cloneID := 1
 	idMap := make(map[string]int)
 	clonesCounter := make(map[int]int)
@@ -63,6 +64,7 @@ func (mr *MemRepo) GetClones() error {
 	}
 	// write slice back to the storage
 	mr.fileSlice = onlyClones
+	mr.slogger.Debugf("fount %d clones", len(onlyClones))
 	return nil
 }
 

@@ -32,14 +32,12 @@ func (srv *service) FindFiles(path string) error {
 		srv.slogger.Errorf("error finding subfolders, %v", err)
 		return err
 	}
-	srv.slogger.Debugf("obtained fileSlice on %s directory, %d files", path, len(dirSlice))
 	// obtain all the files in all subfolders
 	fileSlice, err := srv.fs.FindFiles(dirSlice)
 	if err != nil {
 		srv.slogger.Errorf("error finding files, %v", err)
 		return err
 	}
-	srv.slogger.Debugf("obtained fileSlice on %s directory, %d files", path, len(fileSlice))
 	// store files data in the storage
 	srv.storage.StoreFiles(fileSlice)
 	return nil
