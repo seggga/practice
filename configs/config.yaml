@@ -1,4 +1,10 @@
-# ClonesSearch cloremover
+# Cloremover configuration file
 
-# loglevel ["debug, "info", "error"]
+# loglevel "debug" / "info" / "error"
 loglevel: "info"
+
+# number of goroutines executing simultaneously
+cores: 2
+
+# directory to find clone files
+dir: "./test-folder"
