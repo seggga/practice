@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"sync"
 
 	"github.com/seggga/practice/internal/domain"
@@ -11,6 +12,7 @@ import (
 )
 
 type FileSystem struct {
+	dir        string
 	fileSystem fs.FS
 	slogger    *zap.SugaredLogger
 }
@@ -19,6 +21,7 @@ type FileSystem struct {
 func New(dir string, slogger *zap.SugaredLogger) *FileSystem {
 	fsys := os.DirFS(dir)
 	return &FileSystem{
+		dir:        dir,
 		fileSystem: fsys,
 		slogger:    slogger,
 	}
@@ -78,8 +81,8 @@ func (f *FileSystem) FindFiles(dirSlice []string) ([]domain.File, error) {
 							// log error
 							return
 						}
+						file.Path = path.Join(f.dir, someDir, file.Name)
 						file.SizeInBytes = int(fileInfo.Size())
-
 						mutex.Lock()
 						resultSlice = append(resultSlice, *file)
 						mutex.Unlock()
@@ -99,11 +102,11 @@ func (f *FileSystem) FindFiles(dirSlice []string) ([]domain.File, error) {
 }
 
 // RemoveFile removes a file specified
-func (fs *FileSystem) RemoveFile(file domain.File) error {
-	fs.slogger.Debugf("trying to remove [ %s ] file", file.Path)
+func (f *FileSystem) RemoveFile(file domain.File) error {
+	f.slogger.Debugf("trying to remove [ %s ] file", file.Path)
 	err := os.Remove(file.Path)
 	if err != nil {
-		fs.slogger.Errorf("failed remove file", err)
+		f.slogger.Errorf("failed remove file", err)
 	}
 	return err
 }
