@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 
 	"github.com/seggga/practice/internal/filesystem"
 	"github.com/seggga/practice/internal/repositories/memrepo"
@@ -20,24 +19,25 @@ func main() {
 		fmt.Println("error reading config, program exit")
 		return
 	}
-
 	// init logger
 	loggerConfig, err := newLoggerConfig(*config)
 	if err != nil {
 		fmt.Printf("error reading config, %v", err)
 	}
 	logger, _ := loggerConfig.Build()
-	// logger := zap.New(zapcore.NewCore(zap.Encode))
-	logger.Info("hello, log!")
+	defer func() { _ = logger.Sync() }()
+
+	slogger := logger.Sugar()
+	slogger.Info("Starting the application...")
 	// define filesystem
 	if config.Dir == "" {
-		fmt.Println("directory (Dir) not set in config.yaml, program exit")
+		slogger.Error("directory (Dir) not set in config.yaml, program exit")
 		return
 	}
-	fs := filesystem.New(os.DirFS(config.Dir))
+	fs := filesystem.New(config.Dir)
 	// define storage
 	stor := memrepo.New()
-	service := cloremover.New(fs, stor)
+	service := cloremover.New(fs, stor, slogger)
 
 	// obtain files
 	err = service.FindFiles(config.Dir)
@@ -97,5 +97,12 @@ func newLoggerConfig(config Config) (*zap.Config, error) {
 		Encoding:    "json",
 		Level:       level,
 		OutputPaths: []string{"stdout"},
+		EncoderConfig: zapcore.EncoderConfig{
+			MessageKey:  "message",
+			LevelKey:    "level",
+			EncodeLevel: zapcore.CapitalLevelEncoder,
+			TimeKey:     "time",
+			EncodeTime:  zapcore.ISO8601TimeEncoder,
+		},
 	}, nil
 }
