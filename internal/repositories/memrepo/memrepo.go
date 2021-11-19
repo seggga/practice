@@ -12,6 +12,7 @@ type MemRepo struct {
 	slogger   *zap.SugaredLogger
 }
 
+// New creates a MemRepo instance
 func New(slogger *zap.SugaredLogger) *MemRepo {
 	return &MemRepo{
 		fileSlice: make([]domain.File, 0),
@@ -19,11 +20,13 @@ func New(slogger *zap.SugaredLogger) *MemRepo {
 	}
 }
 
+// StoreFiles writes file-data to MemRepo.Slices
 func (mr *MemRepo) StoreFiles(files []domain.File) {
 	mr.fileSlice = files
 	mr.slogger.Debugf("stored %d file-elements", len(files))
 }
 
+// GetClones changes storage content: it deletes file-data with unique files and leaves data about clones only
 func (mr *MemRepo) GetClones() error {
 	mr.slogger.Debug("started")
 	cloneID := 1
@@ -68,10 +71,13 @@ func (mr *MemRepo) GetClones() error {
 	return nil
 }
 
+// ReadFiles reads file-data from MemRepo.Slices
 func (mr *MemRepo) ReadFiles() []domain.File {
+	mr.slogger.Debugf("obtained %d file-elements", len(mr.fileSlice))
 	return mr.fileSlice
 }
 
+// RemoveFile removes data about a file from the storage
 func (mr *MemRepo) RemoveFile(file domain.File) {
 	var ind int
 	for i := 1; i < len(mr.fileSlice); i += 1 {
@@ -80,5 +86,6 @@ func (mr *MemRepo) RemoveFile(file domain.File) {
 			break
 		}
 	}
+	mr.slogger.Debugf("removing [ %s ] file from storage", file.Path)
 	mr.fileSlice = append(mr.fileSlice[:ind], mr.fileSlice[ind+1:]...)
 }

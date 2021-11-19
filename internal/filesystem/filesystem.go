@@ -15,6 +15,7 @@ type FileSystem struct {
 	slogger    *zap.SugaredLogger
 }
 
+// New creates a FileSystem instance
 func New(dir string, slogger *zap.SugaredLogger) *FileSystem {
 	fsys := os.DirFS(dir)
 	return &FileSystem{
@@ -23,6 +24,7 @@ func New(dir string, slogger *zap.SugaredLogger) *FileSystem {
 	}
 }
 
+// FindSubfolders implements search for subdirectories inside the given path
 func (f *FileSystem) FindSubfolders(path string) ([]string, error) {
 	f.slogger.Debugf("start scan folders in %s directory", path)
 	var dirSlice []string
@@ -96,6 +98,12 @@ func (f *FileSystem) FindFiles(dirSlice []string) ([]domain.File, error) {
 	return resultSlice, nil
 }
 
+// RemoveFile removes a file specified
 func (fs *FileSystem) RemoveFile(file domain.File) error {
-	return os.Remove(file.Path)
+	fs.slogger.Debugf("trying to remove [ %s ] file", file.Path)
+	err := os.Remove(file.Path)
+	if err != nil {
+		fs.slogger.Errorf("failed remove file", err)
+	}
+	return err
 }
