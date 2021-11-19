@@ -2,6 +2,7 @@ package memrepo
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/seggga/practice/internal/domain"
 	"go.uber.org/zap"
@@ -69,6 +70,54 @@ func (mr *MemRepo) GetClones() error {
 	mr.fileSlice = onlyClones
 	mr.slogger.Debugf("fount %d clones", len(onlyClones))
 	return nil
+}
+
+// sortFiles sorts by CloneID
+func sortByID(sl []domain.File) []domain.File {
+	sort.Slice(sl, func(i, j int) bool {
+		return sl[i].CloneID < sl[j].CloneID
+	})
+	return sl
+}
+
+// sortByPath sorts by Path
+func sortByPath(sl []domain.File) []domain.File {
+	sort.Slice(sl, func(i, j int) bool {
+		return sl[i].Path < sl[j].Path
+	})
+	return sl
+}
+
+// GetDeletable produces a slice with files to be deleted
+func (mr *MemRepo) GetDeletable() {
+	clones := mr.fileSlice
+	clones = sortByID(clones)
+
+	var cloneID = 0
+	var cloneGroup, deletableFiles []domain.File
+	for i, fileData := range clones {
+		// the last element in slice
+		if i == len(clones)-1 {
+			cloneGroup = append(cloneGroup, fileData)
+			cloneID = 0
+		}
+		if fileData.CloneID != cloneID {
+			// new group of clones
+			if len(cloneGroup) != 0 {
+				// cloneGroup contains all identical files
+				// delete all files except the first (with the smallest path)
+				cloneGroup = sortByPath(cloneGroup)
+				deletableFiles = append(deletableFiles, cloneGroup[1:]...)
+				// clear cloneGroup
+				cloneGroup = cloneGroup[:0]
+				continue
+			}
+			// create a new slice of clones
+			cloneID = fileData.CloneID
+		}
+		cloneGroup = append(cloneGroup, fileData)
+	}
+	mr.fileSlice = deletableFiles
 }
 
 // ReadFiles reads file-data from MemRepo.Slices
