@@ -13,7 +13,8 @@ type FileSystem struct {
 	fileSystem fs.FS
 }
 
-func New(fsys fs.FS) *FileSystem {
+func New(dir string) *FileSystem {
+	fsys := os.DirFS(dir)
 	return &FileSystem{
 		fileSystem: fsys,
 	}

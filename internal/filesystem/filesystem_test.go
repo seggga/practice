@@ -68,7 +68,7 @@ func TestFindSubfoldersRealFS(t *testing.T) {
 	defer deleteTestFolder()
 
 	dir := "test-folder"
-	FS := New(os.DirFS(dir))
+	FS := New(dir)
 	dirSlice, _ := FS.FindSubfolders(dir)
 
 	expectedSlice := []string{".", "test-folder1", "test-folder2", "test-folder3", "test-folder3/test-folder4"}
@@ -98,7 +98,7 @@ func TestFindFilesRealFS(t *testing.T) {
 	defer deleteTestFolder()
 
 	dir := "test-folder"
-	FS := New(os.DirFS(dir))
+	FS := New(dir)
 	dirSlice, _ := FS.FindSubfolders(dir)
 	fileSlice, _ := FS.FindFiles(dirSlice)
 
