@@ -20,7 +20,7 @@ func (mr *MemRepo) StoreFiles(files []domain.File) {
 	mr.fileSlice = files
 }
 
-func (mr *MemRepo) GetClones() {
+func (mr *MemRepo) GetClones() error {
 
 	cloneID := 1
 	idMap := make(map[string]int)
@@ -60,6 +60,7 @@ func (mr *MemRepo) GetClones() {
 	}
 	// write slice back to the storage
 	mr.fileSlice = onlyClones
+	return nil
 }
 
 func (mr *MemRepo) ReadFiles() []domain.File {
