@@ -124,16 +124,3 @@ func (mr *MemRepo) ReadFiles() []domain.File {
 	mr.slogger.Debugf("obtained %d file-elements", len(mr.fileSlice))
 	return mr.fileSlice
 }
-
-// RemoveFile removes data about a file from the storage
-func (mr *MemRepo) RemoveFile(file domain.File) {
-	var ind int
-	for i := 1; i < len(mr.fileSlice); i += 1 {
-		if mr.fileSlice[i].Path == file.Path {
-			ind = i
-			break
-		}
-	}
-	mr.slogger.Debugf("removing [ %s ] file from storage", file.Path)
-	mr.fileSlice = append(mr.fileSlice[:ind], mr.fileSlice[ind+1:]...)
-}
